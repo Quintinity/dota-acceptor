@@ -1,4 +1,4 @@
-FLAGS=-std=c++17 -Wall -Wextra -pedantic
+FLAGS=-std=c++17 -Wall -Wextra -pedantic -Wl,-subsystem,windows
 LIBS=-lgdi32
 EXEC=DotaAcceptor.exe
 

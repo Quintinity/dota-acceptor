@@ -110,7 +110,7 @@ DWORD WINAPI watcher_thread_function(LPVOID /* data */) {
             }
 
             if (num_match == points.size()) {
-                std::cout << "Game is ready!" << std::endl;
+                //std::cout << "Game is ready!" << std::endl;
                 SetForegroundWindow(dota_window);
                 Sleep(100);
 
