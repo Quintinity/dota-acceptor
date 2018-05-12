@@ -1,13 +1,45 @@
 #include "watcher_thread.h"
-#define WM_TASKBAR_ICON (WM_APP + 1)
+#define WM_TASKBAR_ICON (WM_USER + 1)
+#define MENU_EXIT 1000
+
 
 static const char className[] = "DotaAcceptorWindowClass";
+static NOTIFYICONDATA nid;
+static HMENU menu;
+
+void Cleanup() {
+    Shell_NotifyIcon(NIM_DELETE, &nid);
+}
+
+BOOL WINAPI ConsoleHandler(DWORD event) {
+    if (event == CTRL_C_EVENT) {
+        Cleanup();
+        return FALSE;
+    }
+    return TRUE;
+}
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == WM_TASKBAR_ICON && lParam == WM_RBUTTONDOWN) {
+        POINT cursor;
+        GetCursorPos(&cursor);
+        SetForegroundWindow(hwnd);
+        UINT selected = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_NONOTIFY, cursor.x, cursor.y, 0, hwnd, NULL);
+        if (selected == MENU_EXIT) {
+            Cleanup();
+            ExitProcess(0);
+        }
+    }
+    else if (uMsg == WM_CREATE) {
+        menu = CreatePopupMenu();
+        AppendMenu(menu, MF_STRING, MENU_EXIT, TEXT("Exit"));
+    }
+
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+    SetConsoleCtrlHandler(ConsoleHandler, TRUE);
 
     WNDCLASS wndClass = {};
     wndClass.lpfnWndProc = WindowProc;
@@ -34,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
     HICON icon = (HICON) LoadImage(hInstance, TEXT("ICON_MAIN"), IMAGE_ICON, 48, 48, 0);
 
-    NOTIFYICONDATA nid;
+   
     nid.cbSize = sizeof(nid);
     nid.hWnd = window;
     nid.uID = 1;
@@ -48,9 +80,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         return 0;
     }
 
-    HANDLE thread = CreateThread(NULL, 0, watcher_thread_function, NULL, 0, NULL);
-    if (thread) {
-        WaitForSingleObject(thread, INFINITE);
+    CreateThread(NULL, 0, watcher_thread_function, NULL, 0, NULL);
+    
+    MSG msg;
+    while(GetMessage(&msg, NULL, 0, 0) > 0){
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     return 0;
