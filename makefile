@@ -27,4 +27,4 @@ directories:
 
 .PHONY:
 clean:
-	rm -rv $(BIN)
+	rm -f /
